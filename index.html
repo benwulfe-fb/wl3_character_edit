@@ -1,0 +1,1448 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wasteland 3 — Ranger Build Console</title>
+<style>
+/* ============================================================
+   RANGER BUILD CONSOLE — deliberate single-theme (dark) design.
+   Every colour is painted explicitly so the page holds on any host ground.
+   ============================================================ */
+:root{
+  --ground:#12100E;
+  --panel:#1C1917;
+  --panel-2:#232019;
+  --panel-3:#2B2721;
+  --line:#38322B;
+  --line-soft:#292420;
+  --ink:#E8E2D6;
+  --ink-dim:#9A9086;
+  --ink-faint:#6B635A;
+  --amber:#E8842B;
+  --amber-dim:#8A5220;
+  --ice:#6FB3C4;
+  --ice-dim:#39616B;
+  --good:#7FA96B;
+  --warn:#D9A441;
+  --bad:#C4553D;
+  --font-display:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --font-body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --r:3px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:15px;
+  line-height:1.5;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.012) 0 1px, transparent 1px 3px);
+}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+/* ---------- masthead ---------- */
+.masthead{
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,#1A1714,#131110);
+  padding:14px clamp(12px,2.5vw,28px);
+  display:flex;flex-wrap:wrap;gap:20px 28px;align-items:center;
+  position:sticky;top:0;z-index:50;
+}
+.brand{display:flex;flex-direction:column;gap:2px;min-width:210px}
+.brand h1{
+  margin:0;font-family:var(--font-display);font-size:15px;font-weight:700;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--amber);
+}
+.brand .sub{
+  font-family:var(--font-display);font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-faint);
+}
+.namefield{
+  background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r);
+  padding:7px 10px;font-family:var(--font-display);font-size:13px;
+  letter-spacing:.06em;min-width:190px;
+}
+.namefield::placeholder{color:var(--ink-faint)}
+
+/* level stepper */
+.level-block{display:flex;align-items:center;gap:10px}
+.level-readout{text-align:center;min-width:64px}
+.level-readout .n{
+  font-family:var(--font-display);font-size:30px;font-weight:700;line-height:1;
+  color:var(--ink);font-variant-numeric:tabular-nums;
+}
+.level-readout .l{
+  font-family:var(--font-display);font-size:9px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink-faint);display:block;margin-top:3px;
+}
+.step{
+  width:34px;height:34px;border:1px solid var(--line);background:var(--panel-2);
+  border-radius:var(--r);font-family:var(--font-display);font-size:17px;
+  color:var(--ink);display:grid;place-items:center;transition:.12s;
+}
+.step:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
+.step:disabled{opacity:.28;cursor:not-allowed}
+
+/* budget meters */
+.meters{display:flex;gap:10px;flex-wrap:wrap;margin-left:auto}
+.meter{
+  border:1px solid var(--line);background:var(--panel);border-radius:var(--r);
+  padding:7px 12px;min-width:132px;
+}
+.meter .top{
+  display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  font-family:var(--font-display);
+}
+.meter .lab{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint)}
+.meter .val{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ice)}
+.meter .bar{height:3px;background:var(--panel-3);border-radius:2px;margin-top:6px;overflow:hidden}
+.meter .fill{height:100%;background:var(--ice);transition:width .18s}
+.meter.over .val{color:var(--bad)}
+.meter.over .fill{background:var(--bad)}
+.meter.spent .val{color:var(--ink-faint)}
+.meter .sub{font-family:var(--font-display);font-size:9px;letter-spacing:.1em;color:var(--ink-faint);margin-top:4px}
+
+/* ---------- combat readout strip ---------- */
+.readout{
+  padding:16px clamp(12px,2.5vw,28px);
+  border-bottom:1px solid var(--line);
+  background:var(--panel);
+}
+.readout-head{
+  display:flex;align-items:center;gap:12px;margin-bottom:12px;
+}
+.readout-head h2{
+  margin:0;font-family:var(--font-display);font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink-dim);white-space:nowrap;
+}
+.rule{height:1px;background:var(--line);flex:1}
+.tiles{
+  display:grid;gap:1px;background:var(--line-soft);
+  grid-template-columns:repeat(auto-fit,minmax(112px,1fr));
+  border:1px solid var(--line-soft);border-radius:var(--r);overflow:hidden;
+}
+.tile{background:var(--panel-2);padding:10px 12px}
+.tile .k{
+  font-family:var(--font-display);font-size:9px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-faint);display:block;
+}
+.tile .v{
+  font-family:var(--font-display);font-size:21px;font-weight:700;line-height:1.15;
+  font-variant-numeric:tabular-nums;margin-top:3px;display:block;color:var(--ink);
+}
+.tile .v .u{font-size:11px;font-weight:400;color:var(--ink-faint);margin-left:2px}
+.tile.hot .v{color:var(--amber)}
+.tile .d{font-family:var(--font-display);font-size:9px;color:var(--good);letter-spacing:.06em}
+.tile .d.neg{color:var(--bad)}
+
+/* ---------- console columns ---------- */
+.console{
+  display:grid;gap:16px;padding:16px clamp(12px,2.5vw,28px) 40px;
+  grid-template-columns:minmax(0,1fr);
+  align-items:start;
+}
+@media(min-width:1000px){ .console{grid-template-columns:minmax(0,340px) minmax(0,1fr)} }
+@media(min-width:1500px){ .console{grid-template-columns:minmax(0,340px) minmax(0,1fr) minmax(0,430px)} }
+.stack{display:flex;flex-direction:column;gap:16px;min-width:0}
+
+.panel{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);overflow:hidden}
+.panel > header{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  border-bottom:1px solid var(--line);background:var(--panel-2);
+}
+.panel > header h2{
+  margin:0;font-family:var(--font-display);font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--amber);
+}
+.panel > header .note{
+  margin-left:auto;font-family:var(--font-display);font-size:9px;
+  letter-spacing:.1em;color:var(--ink-faint);text-transform:uppercase;
+}
+.panel .body{padding:12px 14px}
+.panel .body.flush{padding:0}
+
+/* ---------- attributes ---------- */
+.attr{border-bottom:1px solid var(--line-soft);padding:10px 14px}
+.attr:last-child{border-bottom:0}
+.attr-top{display:flex;align-items:center;gap:8px}
+.attr-name{
+  font-family:var(--font-display);font-size:11px;letter-spacing:.13em;
+  text-transform:uppercase;flex:1;min-width:0;
+}
+.attr-name .abbr{color:var(--ink-faint);margin-left:5px;font-size:10px}
+.num{
+  font-family:var(--font-display);font-size:17px;font-weight:700;
+  font-variant-numeric:tabular-nums;min-width:22px;text-align:center;
+}
+.num.boosted{color:var(--ice)}
+.num.capped{color:var(--warn)}
+.sm{
+  width:26px;height:26px;border:1px solid var(--line);background:var(--panel-2);
+  border-radius:var(--r);font-family:var(--font-display);font-size:14px;line-height:1;
+  display:grid;place-items:center;transition:.12s;padding:0;
+}
+.sm:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
+.sm:disabled{opacity:.25;cursor:not-allowed}
+.pips{display:flex;gap:2px;margin:7px 0 0}
+.pip{flex:1;height:4px;background:var(--panel-3);border-radius:1px}
+.pip.on{background:var(--amber)}
+.pip.gear{background:var(--ice)}
+.attr-fx{
+  font-family:var(--font-display);font-size:10px;color:var(--ink-dim);
+  letter-spacing:.03em;margin-top:7px;line-height:1.6;
+}
+.attr-fx b{color:var(--ink);font-weight:700}
+.gear-in{
+  width:52px;background:var(--panel-2);border:1px solid var(--line);
+  border-radius:var(--r);padding:3px 5px;font-family:var(--font-display);
+  font-size:11px;text-align:center;font-variant-numeric:tabular-nums;
+}
+.gear-in.set{border-color:var(--ice-dim);color:var(--ice)}
+.gear-lab{
+  font-family:var(--font-display);font-size:9px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-faint);
+}
+
+/* ---------- skills ---------- */
+.skillgroup-head{
+  display:flex;align-items:center;gap:10px;padding:9px 14px;
+  background:var(--panel-2);border-bottom:1px solid var(--line-soft);
+  border-top:1px solid var(--line-soft);
+}
+.skillgroup-head:first-child{border-top:0}
+.skillgroup-head h3{
+  margin:0;font-family:var(--font-display);font-size:9px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink-dim);
+}
+.skillgroup-head .cnt{
+  margin-left:auto;font-family:var(--font-display);font-size:9px;color:var(--ink-faint);
+}
+.skill{
+  display:grid;align-items:center;gap:8px;padding:7px 14px;
+  border-bottom:1px solid var(--line-soft);
+  grid-template-columns:minmax(120px,1.4fr) minmax(80px,1fr) auto auto auto auto auto;
+}
+.skill:hover{background:var(--panel-2)}
+.skill:last-child{border-bottom:0}
+.skill .nm{
+  font-family:var(--font-display);font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.skill .nm.trained{color:var(--ink)}
+.skill .nm.untrained{color:var(--ink-faint)}
+.skill .cost{
+  font-family:var(--font-display);font-size:10px;color:var(--ink-faint);
+  white-space:nowrap;min-width:44px;text-align:right;font-variant-numeric:tabular-nums;
+}
+.skill .cost.afford{color:var(--ice)}
+.skill .cost.max{color:var(--good)}
+.skill .perkdot{
+  font-family:var(--font-display);font-size:9px;color:var(--amber);
+  min-width:26px;text-align:right;
+}
+@media(max-width:640px){
+  .skill{grid-template-columns:1fr auto auto auto;grid-auto-flow:row}
+  .skill .pips-wrap{grid-column:1/-1}
+}
+
+/* ---------- perks ---------- */
+.perk{
+  border-bottom:1px solid var(--line-soft);padding:10px 14px;
+  display:flex;gap:10px;align-items:flex-start;
+}
+.perk:last-child{border-bottom:0}
+.perk.locked{opacity:.42}
+.perk.owned{background:linear-gradient(90deg,rgba(232,132,43,.09),transparent 65%)}
+.perk .meta{flex:1;min-width:0}
+.perk .pn{
+  font-family:var(--font-display);font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink);
+}
+.perk.owned .pn{color:var(--amber)}
+.perk .req{
+  font-family:var(--font-display);font-size:9px;letter-spacing:.1em;
+  color:var(--ink-faint);text-transform:uppercase;margin-top:2px;
+}
+.perk .req .ok{color:var(--good)}
+.perk .req .no{color:var(--bad)}
+.perk .desc{font-size:12.5px;color:var(--ink-dim);margin-top:5px;line-height:1.45}
+.perk .flag{
+  display:inline-block;font-family:var(--font-display);font-size:8px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--warn);
+  border:1px solid rgba(217,164,65,.4);border-radius:2px;padding:0 4px;margin-left:6px;
+  vertical-align:1px;
+}
+.btn{
+  border:1px solid var(--line);background:var(--panel-2);border-radius:var(--r);
+  padding:5px 11px;font-family:var(--font-display);font-size:10px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim);
+  white-space:nowrap;transition:.12s;
+}
+.btn:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+.btn.on{background:var(--amber-dim);border-color:var(--amber);color:#1A1512;font-weight:700}
+.btn.on:hover{background:var(--amber);color:#1A1512}
+.btn.ghost{background:transparent}
+
+/* ---------- selects / choices ---------- */
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.field > label{
+  font-family:var(--font-display);font-size:9px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-faint);
+}
+select.sel{
+  background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r);
+  padding:7px 9px;font-family:var(--font-display);font-size:12px;width:100%;
+}
+.choice-fx{
+  font-size:12.5px;color:var(--ink-dim);line-height:1.5;
+  border-left:2px solid var(--amber-dim);padding-left:9px;margin-top:2px;
+}
+.choice-fx em{color:var(--ink);font-style:normal}
+
+/* ---------- full stat table ---------- */
+.statrow{
+  display:flex;justify-content:space-between;gap:12px;align-items:baseline;
+  padding:5px 0;border-bottom:1px solid var(--line-soft);
+}
+.statrow:last-child{border-bottom:0}
+.statrow .k{font-family:var(--font-display);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim)}
+.statrow .v{font-family:var(--font-display);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.statrow .v.zero{color:var(--ink-faint);font-weight:400}
+.subhead{
+  font-family:var(--font-display);font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--amber);margin:14px 0 5px;padding-bottom:4px;border-bottom:1px solid var(--line);
+}
+.subhead:first-child{margin-top:0}
+
+/* ---------- gear grid ---------- */
+.geargrid{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center}
+.geargrid .gl{font-family:var(--font-display);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-dim)}
+
+/* ---------- alerts ---------- */
+.alert{
+  border:1px solid var(--bad);background:rgba(196,85,61,.11);border-radius:var(--r);
+  padding:9px 12px;font-size:12.5px;color:#E9A996;margin:0 0 12px;
+}
+.alert b{color:var(--bad)}
+.hint{font-size:12px;color:var(--ink-faint);line-height:1.5}
+.hint code{
+  font-family:var(--font-display);font-size:11px;background:var(--panel-3);
+  padding:1px 4px;border-radius:2px;color:var(--ink-dim);
+}
+
+/* ---------- toolbar ---------- */
+.toolbar{display:flex;flex-wrap:wrap;gap:7px}
+details.disclose{border-top:1px solid var(--line-soft)}
+details.disclose > summary{
+  cursor:pointer;padding:9px 14px;font-family:var(--font-display);font-size:9px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);list-style:none;
+}
+details.disclose > summary::-webkit-details-marker{display:none}
+details.disclose > summary::before{content:"▸ ";color:var(--amber)}
+details.disclose[open] > summary::before{content:"▾ "}
+details.disclose > summary:hover{color:var(--amber)}
+details.disclose .inner{padding:0 14px 14px}
+.srcs{font-size:12px;color:var(--ink-dim);line-height:1.65}
+.srcs li{margin-bottom:5px}
+.tag-v,.tag-a{
+  font-family:var(--font-display);font-size:8px;letter-spacing:.1em;text-transform:uppercase;
+  border-radius:2px;padding:1px 5px;white-space:nowrap;
+}
+.tag-v{color:var(--good);border:1px solid rgba(127,169,107,.4)}
+.tag-a{color:var(--warn);border:1px solid rgba(217,164,65,.4)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="brand">
+    <h1>Ranger Build Console</h1>
+    <span class="sub">Wasteland 3 · Character Planner</span>
+  </div>
+
+  <input id="charName" class="namefield" placeholder="RANGER NAME" maxlength="28" aria-label="Ranger name">
+
+  <div class="level-block">
+    <button class="step" id="lvlDown" title="Decrease level" aria-label="Decrease level">−</button>
+    <div class="level-readout"><span class="n" id="lvlNum">1</span><span class="l">Level</span></div>
+    <button class="step" id="lvlUp" title="Increase level" aria-label="Increase level">+</button>
+  </div>
+
+  <div class="meters" id="meters"></div>
+</header>
+
+<section class="readout">
+  <div class="readout-head">
+    <h2>Combat Readout</h2><div class="rule"></div>
+  </div>
+  <div class="tiles" id="tiles"></div>
+</section>
+
+<main class="console">
+
+  <!-- ============ COLUMN 1 : identity, attributes, gear ============ -->
+  <div class="stack">
+
+    <section class="panel">
+      <header><h2>Origin</h2></header>
+      <div class="body">
+        <div class="field">
+          <label for="bgSel">Background</label>
+          <select id="bgSel" class="sel"></select>
+          <div class="choice-fx" id="bgFx"></div>
+        </div>
+        <div class="field">
+          <label for="qkSel">Quirk</label>
+          <select id="qkSel" class="sel"></select>
+          <div class="choice-fx" id="qkFx"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <header>
+        <h2>Attributes</h2>
+        <span class="note" id="attrNote"></span>
+      </header>
+      <div class="body flush" id="attrList"></div>
+      <details class="disclose">
+        <summary>How gear columns work</summary>
+        <div class="inner hint">
+          The <code>GEAR</code> box beside each attribute is a free-form modifier for worn
+          items and consumables. It never costs attribute points and can go negative.
+          Effective rank drives every derived stat, and the game's attribute tables stop
+          at 10 — anything above that is shown but clamped for the maths.
+        </div>
+      </details>
+    </section>
+
+    <section class="panel">
+      <header><h2>Gear &amp; Stat Modifiers</h2></header>
+      <div class="body">
+        <p class="hint" style="margin:0 0 10px">
+          Flat bonuses from armour, weapons and mods that land on derived stats rather
+          than attributes. Added after all attribute maths.
+        </p>
+        <div class="geargrid" id="gearGrid"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <header><h2>Build File</h2></header>
+      <div class="body">
+        <div class="field">
+          <label for="saveSel">Saved builds</label>
+          <select id="saveSel" class="sel"></select>
+        </div>
+        <div class="toolbar">
+          <button class="btn" id="btnSave">Save</button>
+          <button class="btn" id="btnLoad">Load</button>
+          <button class="btn" id="btnDelete">Delete</button>
+          <button class="btn" id="btnExport">Export JSON</button>
+          <button class="btn" id="btnImport">Import JSON</button>
+          <button class="btn ghost" id="btnReset">Reset</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ============ COLUMN 2 : skills ============ -->
+  <div class="stack">
+    <section class="panel">
+      <header>
+        <h2>Skills</h2>
+        <span class="note" id="skillNote"></span>
+      </header>
+      <div id="overAlert"></div>
+      <div class="body flush" id="skillList"></div>
+      <details class="disclose">
+        <summary>Skill cost curve</summary>
+        <div class="inner hint" id="costCurve"></div>
+      </details>
+    </section>
+  </div>
+
+  <!-- ============ COLUMN 3 : perks + full stats ============ -->
+  <div class="stack">
+
+    <section class="panel">
+      <header>
+        <h2>Perks</h2>
+        <span class="note" id="perkNote"></span>
+      </header>
+      <div class="body" style="padding-bottom:6px">
+        <div class="toolbar">
+          <button class="btn" id="perkFilter">Show all</button>
+          <button class="btn" id="btnAddPerk">+ Custom perk</button>
+        </div>
+      </div>
+      <div class="body flush" id="perkList"></div>
+    </section>
+
+    <section class="panel">
+      <header><h2>Full Statistics</h2></header>
+      <div class="body" id="fullStats"></div>
+    </section>
+
+    <section class="panel">
+      <header><h2>Data &amp; Assumptions</h2></header>
+      <div class="body">
+        <p class="hint" style="margin:0 0 10px">
+          Values tagged <span class="tag-v">verified</span> came from the sources below.
+          Values tagged <span class="tag-a">approx</span> are interpolated between a
+          confirmed rank-1 and rank-10 figure because the per-rank tables were not
+          reachable. Every number lives in the <code>DATA</code> block at the top of this
+          file's script — edit one line to correct it.
+        </p>
+        <div id="assumptions"></div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script>
+"use strict";
+/* ================================================================
+   DATA — everything the engine reads. Edit freely; the UI is generic.
+   ================================================================ */
+
+const RULES = {
+  maxLevel: 35,          // base-game cap; raise if your install differs
+  attrMin: 1,
+  attrMax: 10,
+  attrBase: 2,           // every attribute starts at 2
+  attrPointsAtL1: 7,     // free points to distribute at creation
+  attrFirstLevel: 3,     // +1 attribute point per level from this level on
+  skillMax: 10,
+  skillPtsPerLevel: 3,
+  // cost to move 0>1, 1>2, ... 9>10.  Sums to 28 (confirmed total), rising 1 -> 6.
+  skillCost: [1,1,1,2,2,3,3,4,5,6],
+  perkFirstLevel: 4,
+  perkEvery: 2,          // one perk point every N levels after the first
+  baseAP: 6,
+  baseMaxAP: 10,
+  baseCombatSpeed: 1.4,  // metres per AP
+  baseStrikeRate: 6,     // %
+  baseCon: 10,
+  baseCritChance: 5,     // %
+  baseCritDamage: 2.0,   // multiplier
+};
+
+/* Attribute tables. Index 1..10 = attribute rank (index 0 unused).
+   ver:true  -> both endpoints confirmed by research
+   approx    -> midpoints interpolated                                        */
+const ATTRS = [
+  { id:"coordination", name:"Coordination", abbr:"CO",
+    blurb:"Action points and resistance to status effects.",
+    stats:[
+      {key:"ap",         label:"Action Points",   fmt:"+n",  ver:true,
+       t:[0, 0,1,1,2,2,3,3,4,4,6]},
+      {key:"maxAp",      label:"Max AP",          fmt:"+n",  ver:true,
+       t:[0, 0,1,1,2,2,3,3,4,4,6]},
+      {key:"statusRes",  label:"Status Resist",   fmt:"+p",  ver:false,
+       t:[0, 3,6,9,12,15,18,21,24,27,35]},
+    ]},
+  { id:"luck", name:"Luck", abbr:"LK",
+    blurb:"Free actions, lucky crits, lucky evades and armour penetration.",
+    stats:[
+      {key:"luckyAction",label:"Lucky Action",    fmt:"+p",  ver:true,
+       t:[0, 1,2,3,4,5,6,7,8,9,10]},
+      {key:"luckCrit",   label:"Luck Crit",       fmt:"+p",  ver:true,
+       t:[0, 2,4,6,8,10,12,14,16,18,20]},
+      {key:"megaCrit",   label:"Mega Crit",       fmt:"+p",  ver:true,
+       t:[0, 2,4,6,8,10,12,14,16,18,20]},
+      {key:"luckyEvade", label:"Lucky Evade",     fmt:"+p",  ver:true,
+       t:[0, 2,4,6,8,10,12,14,16,18,20]},
+      {key:"penetration",label:"Penetration",     fmt:"+n",  ver:true,
+       t:[0, 0,1,1,2,2,3,3,4,4,5]},
+    ]},
+  { id:"awareness", name:"Awareness", abbr:"AW",
+    blurb:"Hit chance, ranged damage and how much you spot in the world.",
+    stats:[
+      {key:"hitChance",  label:"Hit Chance",      fmt:"+p",  ver:false,
+       t:[0, 2,4,5,6,7,8,9,10,11,12]},
+      {key:"perception", label:"Perception",      fmt:"+n",  ver:true,
+       t:[0, 1,1,2,3,3,4,4,5,5,6]},
+      {key:"rangedDmg",  label:"Ranged Damage",   fmt:"+p",  ver:false,
+       t:[0, 3,6,9,12,15,18,21,24,27,35]},
+    ]},
+  { id:"strength", name:"Strength", abbr:"ST",
+    blurb:"Health pool, health per level, melee damage and throwing range.",
+    stats:[
+      {key:"con",        label:"Constitution",    fmt:"+n",  ver:true,
+       t:[0, 5,13,21,29,37,45,53,61,68,75]},
+      {key:"conPerLevel",label:"CON / Level",     fmt:"+n",  ver:true,
+       t:[0, 3,4,5,6,7,8,10,12,13,15]},
+      {key:"meleeDmg",   label:"Melee Damage",    fmt:"+p",  ver:false,
+       t:[0, 3,6,9,12,15,18,21,24,27,35]},
+      {key:"throwRange", label:"Throw Range",     fmt:"+m",  ver:true,
+       t:[0, 0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.1]},
+    ]},
+  { id:"speed", name:"Speed", abbr:"SP",
+    blurb:"Distance per action point, evasion and turn order.",
+    stats:[
+      {key:"combatSpeed",label:"Combat Speed",    fmt:"+m",  ver:true,
+       t:[0, 0.1,0.2,0.4,0.6,0.8,1.0,1.1,1.2,1.3,1.4]},
+      {key:"evasion",    label:"Evasion",         fmt:"+p",  ver:true,
+       t:[0, 3,6,9,12,15,18,21,24,27,33]},
+      {key:"initiative", label:"Initiative",      fmt:"+n",  ver:true,
+       t:[0, 4,9,14,19,24,29,34,39,42,45]},
+    ]},
+  { id:"intelligence", name:"Intelligence", abbr:"IN",
+    blurb:"Critical hits, critical healing, and bonus skill points.",
+    stats:[
+      {key:"critChance", label:"Crit Chance",     fmt:"+p",  ver:true,
+       t:[0, 2,4,7,9,11,14,16,18,20,25]},
+      {key:"critDmg",    label:"Crit Damage",     fmt:"+x",  ver:true,
+       t:[0, 0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.1]},
+      {key:"critHeal",   label:"Crit Heal",       fmt:"+p",  ver:true,
+       t:[0, 2,4,7,9,11,14,16,18,20,25]},
+      {key:"bonusSkill", label:"Skill Points",    fmt:"+n",  ver:false,
+       t:[0, 0,1,2,3,4,5,6,7,8,9]},
+    ]},
+  { id:"charisma", name:"Charisma", abbr:"CH",
+    blurb:"Strike rate, leadership reach, experience and mission pay.",
+    stats:[
+      {key:"strikeRate", label:"Strike Rate",     fmt:"+p",  ver:true,
+       t:[0, 2,4,6,8,10,12,14,16,18,22]},
+      {key:"xpBonus",    label:"Experience",      fmt:"+p",  ver:true,
+       t:[0, 2,5,8,11,14,17,20,23,26,30]},
+      {key:"missionPay", label:"Mission Reward",  fmt:"+p",  ver:true,
+       t:[0, 1,2,3,4,5,6,7,8,9,10]},
+    ]},
+];
+
+const SKILL_GROUPS = [
+  { id:"combat", name:"Combat", skills:[
+      ["smallArms","Small Arms"],["sniperRifles","Sniper Rifles"],
+      ["automaticWeapons","Automatic Weapons"],["bigGuns","Big Guns"],
+      ["brawling","Brawling"],["meleeCombat","Melee Combat"],
+      ["explosives","Explosives"],
+  ]},
+  { id:"general", name:"General", skills:[
+      ["firstAid","First Aid"],["weirdScience","Weird Science"],
+      ["survival","Survival"],["animalWhisperer","Animal Whisperer"],
+      ["sneakyShit","Sneaky Shit"],["leadership","Leadership"],
+  ]},
+  { id:"exploration", name:"Exploration", skills:[
+      ["lockpicking","Lockpicking"],["mechanics","Mechanics"],
+      ["nerdStuff","Nerd Stuff"],["toasterRepair","Toaster Repair"],
+      ["weaponModding","Weapon Modding"],["armorModding","Armor Modding"],
+  ]},
+  { id:"social", name:"Social", skills:[
+      ["barter","Barter"],["hardAss","Hard Ass"],["kissAss","Kiss Ass"],
+  ]},
+];
+const SKILLS = SKILL_GROUPS.flatMap(g => g.skills.map(([id,name]) => ({id,name,group:g.id})));
+const SKILL_NAME = Object.fromEntries(SKILLS.map(s => [s.id, s.name]));
+
+/* Perks. req = minimum TRAINED rank in that skill (gear bonuses do not qualify).
+   ver:true = name + rank requirement confirmed by research this session.       */
+const PERKS = [
+  {id:"sa2", skill:"smallArms", req:2, name:"Shredder Shot", ver:true,
+   desc:"Adds a bleed effect on hit, stacking damage over time."},
+  {id:"sa3", skill:"smallArms", req:3, name:"Opportunist", ver:true,
+   desc:"Bonus damage against targets that are already wounded."},
+  {id:"sa5", skill:"smallArms", req:5, name:"Trick Shot", ver:true,
+   desc:"A shot that ricochets to strike an additional nearby target."},
+  {id:"sa6", skill:"smallArms", req:6, name:"Clear Cover", ver:true,
+   desc:"Attacks ignore a portion of the cover bonus your target is using."},
+  {id:"sa7", skill:"smallArms", req:7, name:"Draw!", ver:true,
+   desc:"Opens combat with a free attack before the first turn resolves."},
+  {id:"sa8", skill:"smallArms", req:8, name:"Devastation", ver:true,
+   desc:"Kills with a small arm refund action points."},
+  {id:"sa10",skill:"smallArms", req:10,name:"Counter-Offensive", ver:true,
+   desc:"Return fire when an enemy attacks you and misses."},
+
+  {id:"sr2", skill:"sniperRifles", req:2, name:"Mark Target", ver:true,
+   desc:"Mark an enemy; the whole squad gains bonus damage against it."},
+  {id:"sr5", skill:"sniperRifles", req:5, name:"Masterful Precision", ver:true,
+   desc:"Increased critical chance and critical damage with sniper rifles."},
+  {id:"sr7", skill:"sniperRifles", req:7, name:"Concentration", ver:true,
+   desc:"Holding position between shots raises accuracy and damage."},
+  {id:"sr10",skill:"sniperRifles", req:10,name:"Chain Ambush", ver:true,
+   desc:"An ambush kill immediately re-arms your ambush."},
+
+  {id:"aw2", skill:"automaticWeapons", req:2, name:"Puncturing Shot", ver:true,
+   desc:"Burst fire strips armour from the target."},
+  {id:"aw3", skill:"automaticWeapons", req:3, name:"Gopher Hunter", ver:true,
+   desc:"Bonus damage against targets in cover."},
+  {id:"aw4", skill:"automaticWeapons", req:4, name:"Spray 'N' Pray", ver:true,
+   desc:"A wide burst that hits everything in a cone at reduced accuracy."},
+  {id:"aw6", skill:"automaticWeapons", req:6, name:"Reckless", ver:true,
+   desc:"More damage dealt at the cost of taking more damage."},
+  {id:"aw7", skill:"automaticWeapons", req:7, name:"Double Tap", ver:true,
+   desc:"A second burst at reduced action point cost."},
+  {id:"aw8", skill:"automaticWeapons", req:8, name:"Stormer", ver:true,
+   desc:"Moving before you fire adds damage to the burst."},
+  {id:"aw10",skill:"automaticWeapons", req:10,name:"Trigger Happy", ver:true,
+   desc:"Each consecutive hit on the same target increases damage."},
+
+  {id:"br10",skill:"brawling", req:10, name:"Shaolin Surprise", ver:true,
+   desc:"Finisher that consumes accumulated brawling combo hits on a target."},
+  {id:"am10",skill:"armorModding", req:10, name:"Armor Modding capstone", ver:true,
+   desc:"Armor Modding's single perk, available only at rank 10."},
+];
+
+const BACKGROUNDS = [
+  {id:"none", name:"— None —", fx:{}, text:"No background bonus."},
+  {id:"bookworm", name:"Bookworm", ver:true, fx:{xpBonus:5},
+   text:"Experience Bonus +5%."},
+  {id:"desertCat", name:"Desert Cat", ver:true, fx:{perception:1},
+   text:"Perception +1."},
+  {id:"discipleMetal", name:"Disciple of the Metal", ver:true, fx:{fireDmg:15},
+   text:"Fire Damage Bonus +15%."},
+  {id:"explodomaniac", name:"Explodomaniac", ver:true, fx:{explosiveDmg:15},
+   text:"Explosive Damage Bonus +15%."},
+  {id:"goatKiller", name:"Goat Killer", ver:true, fx:{critChance:5},
+   text:"Critical Chance +5%."},
+  {id:"greaseMonkey", name:"Grease Monkey", ver:true, fx:{vsRobots:15,vsVehicles:15},
+   text:"Bonus Damage to Robots +15%, to Vehicles +15%."},
+  {id:"mannerite", name:"Mannerite", ver:true, fx:{skillBonus:{kissAss:1}},
+   text:"Kiss Ass +1."},
+  {id:"theBoss", name:"The Boss", fx:{skillBonus:{hardAss:1}},
+   text:"Hard Ass +1."},
+  {id:"mopeyPoet", name:"Mopey Poet", fx:{critResist:15},
+   text:"Critical Resistance +15%."},
+  {id:"viciousAvenger", name:"Vicious Avenger", fx:{vsHumans:10},
+   text:"Bonus Damage to Humans +10%."},
+  {id:"lethalWeapon", name:"Lethal Weapon", fx:{combatSpeed:0.2},
+   text:"Combat Speed +0.2."},
+  {id:"custom", name:"Custom / other", fx:{}, text:"Pick this and use the gear panel to model any background not listed."},
+];
+
+const QUIRKS = [
+  {id:"none", name:"— No Quirk —", text:"No quirk taken. Nothing gained, nothing given up."},
+  {id:"serialKiller", name:"Serial Killer", ver:true,
+   text:"Gain +3 AP for each kill in combat, once per turn."},
+  {id:"twoPumpChump", name:"Two-Pump Chump", ver:true,
+   text:"+2 AP for the first 3 turns of combat."},
+  {id:"squeezins", name:"Way of the Squeezins", ver:true,
+   text:"+50% damage while drunk, −20% damage while sober."},
+  {id:"doomsdayPrepper", name:"Doomsday Prepper", ver:true,
+   text:"Take 35% less damage from status effects."},
+  {id:"circusFreak", name:"Circus Freak", ver:true, fx:{critResist:25},
+   text:"Bonus combat speed and +25% critical resistance."},
+  {id:"poindexter", name:"Poindexter", ver:true, mechanic:"poindexter",
+   text:"+1 skill point every 2 levels. Applied to your skill budget automatically."},
+  {id:"blunderer", name:"Blunderer", text:"Trades reliability for occasional windfalls."},
+  {id:"bopBag", name:"Bop Bag", text:"Rewards being hit."},
+  {id:"deathWish", name:"Death Wish", text:"Strong bonus paired with a survivability penalty."},
+  {id:"loneWolf", name:"Lone Wolf", text:"Bonuses while operating away from the squad."},
+  {id:"medicalMarvel", name:"Medical Marvel", text:"Healing-focused trade-off."},
+  {id:"mime", name:"Mime", text:"Silence-themed trade-off."},
+  {id:"prospector", name:"Prospector", text:"Loot-focused trade-off."},
+  {id:"pyromaniac", name:"Pyromaniac", text:"Fire-focused trade-off."},
+  {id:"sadomasochist", name:"Sadomasochist", text:"Damage taken feeds damage dealt."},
+  {id:"varangianBlood", name:"Varangian Blood", text:"Melee-focused trade-off."},
+  {id:"wasteRoamer", name:"Waste Roamer", text:"Exploration-focused trade-off."},
+];
+
+/* Gear modifiers that land directly on derived stats. */
+const GEAR_FIELDS = [
+  {key:"armor",       label:"Armor",          step:1},
+  {key:"ap",          label:"Action Points",  step:1},
+  {key:"maxAp",       label:"Max AP",         step:1},
+  {key:"combatSpeed", label:"Combat Speed",   step:0.1},
+  {key:"evasion",     label:"Evasion %",      step:1},
+  {key:"initiative",  label:"Initiative",     step:1},
+  {key:"con",         label:"Constitution",   step:5},
+  {key:"critChance",  label:"Crit Chance %",  step:1},
+  {key:"critDmg",     label:"Crit Damage x",  step:0.1},
+  {key:"penetration", label:"Penetration",    step:1},
+  {key:"hitChance",   label:"Hit Chance %",   step:1},
+  {key:"strikeRate",  label:"Strike Rate %",  step:1},
+  {key:"critResist",  label:"Crit Resist %",  step:5},
+  {key:"statusRes",   label:"Status Resist %",step:5},
+];
+
+/* ================================================================
+   STATE
+   ================================================================ */
+const LS_KEY = "wl3-ranger-builds";
+
+function blankState(){
+  const s = {
+    name:"", level:1, background:"none", quirk:"none",
+    attrs:{}, attrGear:{}, skills:{}, skillGear:{},
+    perks:[], customPerks:[], gear:{},
+  };
+  ATTRS.forEach(a => { s.attrs[a.id] = RULES.attrBase; s.attrGear[a.id] = 0; });
+  SKILLS.forEach(k => { s.skills[k.id] = 0; s.skillGear[k.id] = 0; });
+  GEAR_FIELDS.forEach(g => { s.gear[g.key] = 0; });
+  return s;
+}
+let S = blankState();
+let showAllPerks = false;
+
+/* ================================================================
+   ENGINE
+   ================================================================ */
+const clamp = (v,lo,hi) => Math.min(hi, Math.max(lo, v));
+const bgOf = () => BACKGROUNDS.find(b => b.id === S.background) || BACKGROUNDS[0];
+const qkOf = () => QUIRKS.find(q => q.id === S.quirk) || QUIRKS[0];
+
+/** Effective attribute rank: trained + gear. Table lookups clamp to 1..10. */
+function effAttr(id){ return S.attrs[id] + (Number(S.attrGear[id]) || 0); }
+function lookupRank(id){ return clamp(effAttr(id), RULES.attrMin, RULES.attrMax); }
+
+/** Read one attribute-derived stat by key, using the effective rank. */
+function attrStat(attrId, key){
+  const a = ATTRS.find(x => x.id === attrId);
+  const st = a.stats.find(x => x.key === key);
+  return st ? st.t[lookupRank(attrId)] : 0;
+}
+
+function cumulativeSkillCost(rank){
+  let n = 0;
+  for (let i = 0; i < rank; i++) n += RULES.skillCost[i];
+  return n;
+}
+function nextSkillCost(rank){
+  return rank >= RULES.skillMax ? null : RULES.skillCost[rank];
+}
+
+/* ---- budgets ---- */
+function attrBudget(){
+  return RULES.attrPointsAtL1 + Math.max(0, S.level - (RULES.attrFirstLevel - 1));
+}
+function attrSpent(){
+  return ATTRS.reduce((n,a) => n + (S.attrs[a.id] - RULES.attrBase), 0);
+}
+function skillBudget(){
+  let n = RULES.skillPtsPerLevel * S.level;
+  n += attrStat("intelligence", "bonusSkill");          // Intelligence bonus
+  if (qkOf().mechanic === "poindexter") n += Math.floor(S.level / 2);
+  return n;
+}
+function skillSpent(){
+  return SKILLS.reduce((n,k) => n + cumulativeSkillCost(S.skills[k.id]), 0);
+}
+function perkBudget(){
+  if (S.level < RULES.perkFirstLevel) return 0;
+  return Math.floor((S.level - RULES.perkFirstLevel) / RULES.perkEvery) + 1;
+}
+function perkSpent(){ return S.perks.length; }
+
+/** Trained rank + any gear bonus on a skill. */
+function effSkill(id){ return S.skills[id] + (Number(S.skillGear[id]) || 0); }
+
+function allPerks(){ return PERKS.concat(S.customPerks); }
+
+/* ---- derived combat statistics ---- */
+function derive(){
+  const g   = k => Number(S.gear[k]) || 0;
+  const bg  = bgOf().fx || {};
+  const qk  = qkOf().fx || {};
+  const ex  = k => (bg[k] || 0) + (qk[k] || 0);
+
+  const conPerLvl = attrStat("strength","conPerLevel");
+  const d = {
+    ap:          RULES.baseAP        + attrStat("coordination","ap")    + g("ap")    + ex("ap"),
+    maxAp:       RULES.baseMaxAP     + attrStat("coordination","maxAp") + g("maxAp") + ex("maxAp"),
+    combatSpeed: RULES.baseCombatSpeed + attrStat("speed","combatSpeed") + g("combatSpeed") + ex("combatSpeed"),
+    evasion:     attrStat("speed","evasion") + g("evasion") + ex("evasion"),
+    luckyEvade:  attrStat("luck","luckyEvade"),
+    initiative:  attrStat("speed","initiative") + g("initiative") + ex("initiative"),
+    con:         RULES.baseCon + attrStat("strength","con") + conPerLvl * (S.level - 1) + g("con") + ex("con"),
+    conPerLevel: conPerLvl,
+    strikeRate:  RULES.baseStrikeRate + attrStat("charisma","strikeRate") + g("strikeRate") + ex("strikeRate"),
+    critChance:  RULES.baseCritChance + attrStat("intelligence","critChance") + g("critChance") + ex("critChance"),
+    luckCrit:    attrStat("luck","luckCrit"),
+    megaCrit:    attrStat("luck","megaCrit"),
+    critDmg:     RULES.baseCritDamage + attrStat("intelligence","critDmg") + g("critDmg") + ex("critDmg"),
+    critHeal:    attrStat("intelligence","critHeal"),
+    penetration: attrStat("luck","penetration") + g("penetration") + ex("penetration"),
+    hitChance:   attrStat("awareness","hitChance") + g("hitChance") + ex("hitChance"),
+    perception:  attrStat("awareness","perception") + ex("perception"),
+    rangedDmg:   attrStat("awareness","rangedDmg") + ex("rangedDmg"),
+    meleeDmg:    attrStat("strength","meleeDmg") + ex("meleeDmg"),
+    throwRange:  attrStat("strength","throwRange"),
+    luckyAction: attrStat("luck","luckyAction"),
+    statusRes:   attrStat("coordination","statusRes") + g("statusRes") + ex("statusRes"),
+    xpBonus:     attrStat("charisma","xpBonus") + ex("xpBonus"),
+    missionPay:  attrStat("charisma","missionPay"),
+    armor:       g("armor"),
+    critResist:  g("critResist") + ex("critResist"),
+    fireDmg:     ex("fireDmg"),
+    explosiveDmg:ex("explosiveDmg"),
+    vsHumans:    ex("vsHumans"),
+    vsRobots:    ex("vsRobots"),
+    vsVehicles:  ex("vsVehicles"),
+  };
+  d.tilesPerAp = Math.floor(d.combatSpeed);
+  return d;
+}
+
+/* ================================================================
+   FORMAT HELPERS
+   ================================================================ */
+const r1 = n => Math.round(n * 10) / 10;
+function fmtStat(fmt, v){
+  switch (fmt){
+    case "+p": return (v>=0?"+":"") + v + "%";
+    case "+m": return (v>=0?"+":"") + r1(v) + "m";
+    case "+x": return (v>=0?"+":"") + r1(v) + "x";
+    default:   return (v>=0?"+":"") + v;
+  }
+}
+const el = (tag, cls, html) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (html != null) n.innerHTML = html;
+  return n;
+};
+const esc = s => String(s).replace(/[&<>"']/g, c => (
+  {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* ================================================================
+   RENDER
+   ================================================================ */
+function render(){
+  renderMeters();
+  renderTiles();
+  renderAttrs();
+  renderGear();
+  renderSkills();
+  renderPerks();
+  renderFullStats();
+  renderChoices();
+  document.getElementById("lvlNum").textContent = S.level;
+  document.getElementById("lvlDown").disabled = S.level <= 1;
+  document.getElementById("lvlUp").disabled   = S.level >= RULES.maxLevel;
+}
+
+function meterEl(label, spent, budget, sub){
+  const left = budget - spent;
+  const m = el("div","meter" + (left < 0 ? " over" : left === 0 ? " spent" : ""));
+  m.innerHTML =
+    '<div class="top"><span class="lab">'+label+'</span>' +
+    '<span class="val">'+left+'</span></div>' +
+    '<div class="bar"><div class="fill" style="width:' +
+      clamp(budget ? (spent/budget)*100 : 0, 0, 100) + '%"></div></div>' +
+    '<div class="sub">'+spent+' spent / '+budget+(sub?" · "+sub:"")+'</div>';
+  return m;
+}
+function renderMeters(){
+  const box = document.getElementById("meters");
+  box.textContent = "";
+  box.appendChild(meterEl("Attribute Pts", attrSpent(), attrBudget()));
+  box.appendChild(meterEl("Skill Pts",     skillSpent(), skillBudget()));
+  box.appendChild(meterEl("Perk Pts",      perkSpent(),  perkBudget()));
+}
+
+function tile(k, v, unit, hot, delta){
+  const t = el("div","tile" + (hot ? " hot" : ""));
+  t.innerHTML = '<span class="k">'+k+'</span><span class="v">'+v+
+    (unit?'<span class="u">'+unit+'</span>':"") + '</span>' +
+    (delta ? '<span class="d'+(delta.startsWith("−")?" neg":"")+'">'+delta+'</span>' : "");
+  return t;
+}
+function renderTiles(){
+  const d = derive();
+  const box = document.getElementById("tiles");
+  box.textContent = "";
+  box.appendChild(tile("Action Points", d.ap, "/ "+d.maxAp+" max", true));
+  box.appendChild(tile("Combat Speed", r1(d.combatSpeed), "m/AP", true,
+    d.tilesPerAp + " tiles per AP"));
+  box.appendChild(tile("Evasion", d.evasion, "%", false,
+    "+"+d.luckyEvade+"% lucky evade"));
+  box.appendChild(tile("Initiative", d.initiative, ""));
+  box.appendChild(tile("Constitution", d.con, "hp", true,
+    "+"+d.conPerLevel+" per level"));
+  box.appendChild(tile("Armor", d.armor, ""));
+  box.appendChild(tile("Crit Chance", d.critChance, "%", false,
+    "+"+d.luckCrit+"% luck crit"));
+  box.appendChild(tile("Crit Damage", r1(d.critDmg), "x"));
+  box.appendChild(tile("Penetration", d.penetration, ""));
+  box.appendChild(tile("Strike Rate", d.strikeRate, "%"));
+  box.appendChild(tile("Hit Chance", "+"+d.hitChance, "%"));
+  box.appendChild(tile("Perception", d.perception, ""));
+}
+
+function renderAttrs(){
+  const box = document.getElementById("attrList");
+  box.textContent = "";
+  const left = attrBudget() - attrSpent();
+
+  ATTRS.forEach(a => {
+    const base = S.attrs[a.id];
+    const gear = Number(S.attrGear[a.id]) || 0;
+    const eff  = base + gear;
+    const used = lookupRank(a.id);
+
+    const row  = el("div","attr");
+    const top  = el("div","attr-top");
+
+    top.appendChild(el("div","attr-name",
+      esc(a.name)+'<span class="abbr">'+a.abbr+'</span>'));
+
+    const minus = el("button","sm","−");
+    minus.disabled = base <= RULES.attrMin;
+    minus.title = "Decrease " + a.name;
+    minus.onclick = () => { S.attrs[a.id]--; render(); };
+
+    const num = el("span","num" + (gear ? " boosted" : "") + (eff > RULES.attrMax ? " capped" : ""), String(eff));
+    num.title = gear ? base+" trained "+(gear>0?"+":"")+gear+" gear" : base+" trained";
+
+    const plus = el("button","sm","+");
+    plus.disabled = base >= RULES.attrMax || left < 1;
+    plus.title = base >= RULES.attrMax ? "At maximum rank" :
+                 left < 1 ? "No attribute points remaining" : "Increase " + a.name;
+    plus.onclick = () => { S.attrs[a.id]++; render(); };
+
+    top.append(minus, num, plus);
+
+    top.appendChild(el("span","gear-lab","Gear"));
+    const gi = el("input","gear-in" + (gear ? " set" : ""));
+    gi.type = "number"; gi.step = "1"; gi.value = gear;
+    gi.setAttribute("aria-label", a.name + " gear modifier");
+    gi.oninput = () => { S.attrGear[a.id] = Number(gi.value) || 0; render(); };
+    top.appendChild(gi);
+
+    row.appendChild(top);
+
+    const pips = el("div","pips");
+    for (let i = 1; i <= RULES.attrMax; i++){
+      pips.appendChild(el("div","pip" + (i <= base ? " on" : i <= eff ? " gear" : "")));
+    }
+    row.appendChild(pips);
+
+    const fx = a.stats.map(st =>
+      esc(st.label)+" <b>"+fmtStat(st.fmt, st.t[used])+"</b>").join(" · ");
+    row.appendChild(el("div","attr-fx", fx +
+      (eff > RULES.attrMax
+        ? ' · <span style="color:var(--warn)">table caps at 10</span>' : "")));
+
+    box.appendChild(row);
+  });
+
+  document.getElementById("attrNote").textContent =
+    "base " + RULES.attrBase + " · max " + RULES.attrMax;
+}
+
+function renderGear(){
+  const box = document.getElementById("gearGrid");
+  if (box.dataset.built) {   // only rebuild values, keep focus stable
+    GEAR_FIELDS.forEach(f => {
+      const i = box.querySelector('[data-gear="'+f.key+'"]');
+      if (i && document.activeElement !== i) i.value = S.gear[f.key] || 0;
+      if (i) i.classList.toggle("set", !!Number(S.gear[f.key]));
+    });
+    return;
+  }
+  box.textContent = "";
+  GEAR_FIELDS.forEach(f => {
+    box.appendChild(el("span","gl", esc(f.label)));
+    const i = el("input","gear-in" + (Number(S.gear[f.key]) ? " set" : ""));
+    i.type = "number"; i.step = String(f.step); i.value = S.gear[f.key] || 0;
+    i.dataset.gear = f.key;
+    i.setAttribute("aria-label", f.label + " gear modifier");
+    i.oninput = () => { S.gear[f.key] = Number(i.value) || 0; render(); };
+    box.appendChild(i);
+  });
+  box.dataset.built = "1";
+}
+
+function renderSkills(){
+  const box  = document.getElementById("skillList");
+  box.textContent = "";
+  const left = skillBudget() - skillSpent();
+
+  const alert = document.getElementById("overAlert");
+  alert.textContent = "";
+  if (left < 0){
+    const a = el("div","alert",
+      "<b>Over budget by "+Math.abs(left)+" skill points.</b> " +
+      "Lowering the level shrank the pool. Reduce skills until the meter returns to zero " +
+      "or raise the level again.");
+    a.style.margin = "12px 14px";
+    alert.appendChild(a);
+  }
+
+  SKILL_GROUPS.forEach(grp => {
+    const trained = grp.skills.filter(([id]) => S.skills[id] > 0).length;
+    const h = el("div","skillgroup-head",
+      "<h3>"+esc(grp.name)+"</h3><span class='cnt'>"+trained+"/"+grp.skills.length+" trained</span>");
+    box.appendChild(h);
+
+    grp.skills.forEach(([id,name]) => {
+      const rank = S.skills[id];
+      const gear = Number(S.skillGear[id]) || 0;
+      const eff  = rank + gear;
+      const cost = nextSkillCost(rank);
+      const perkCount = allPerks().filter(p => p.skill === id).length;
+      const perkReady = allPerks().filter(p =>
+        p.skill === id && rank >= p.req && !S.perks.includes(p.id)).length;
+
+      const row = el("div","skill");
+      row.appendChild(el("div","nm " + (rank > 0 ? "trained" : "untrained"), esc(name)));
+
+      const pw = el("div","pips-wrap");
+      const pips = el("div","pips");
+      pips.style.margin = "0";
+      for (let i = 1; i <= RULES.skillMax; i++){
+        pips.appendChild(el("div","pip" + (i <= rank ? " on" : i <= eff ? " gear" : "")));
+      }
+      pw.appendChild(pips);
+      row.appendChild(pw);
+
+      const minus = el("button","sm","−");
+      minus.disabled = rank <= 0;
+      minus.title = "Decrease " + name;
+      minus.onclick = () => {
+        S.skills[id]--;
+        // drop any perks that no longer meet their requirement
+        S.perks = S.perks.filter(pid => {
+          const p = allPerks().find(x => x.id === pid);
+          return !p || p.skill !== id || S.skills[id] >= p.req;
+        });
+        render();
+      };
+
+      const num = el("span","num" + (gear ? " boosted" : ""), String(eff));
+      num.title = gear ? rank+" trained "+(gear>0?"+":"")+gear+" gear" : rank+" trained";
+
+      const plus = el("button","sm","+");
+      plus.disabled = rank >= RULES.skillMax || cost == null || cost > left;
+      plus.title = rank >= RULES.skillMax ? "At maximum rank"
+                 : cost > left ? "Needs "+cost+" skill points, "+Math.max(0,left)+" available"
+                 : "Increase " + name + " for " + cost + " skill points";
+      plus.onclick = () => { S.skills[id]++; render(); };
+
+      row.append(minus, num, plus);
+
+      row.appendChild(el("div","cost " + (cost == null ? "max" : cost <= left ? "afford" : ""),
+        cost == null ? "MAX" : cost + " sp"));
+
+      const gi = el("input","gear-in" + (gear ? " set" : ""));
+      gi.type = "number"; gi.step = "1"; gi.value = gear;
+      gi.setAttribute("aria-label", name + " gear modifier");
+      gi.oninput = () => { S.skillGear[id] = Number(gi.value) || 0; render(); };
+      row.appendChild(gi);
+
+      row.appendChild(el("div","perkdot",
+        perkCount ? (perkReady ? "★"+perkReady : perkCount+"p") : ""));
+
+      box.appendChild(row);
+    });
+  });
+
+  document.getElementById("skillNote").textContent =
+    SKILLS.length + " skills · 28 sp to max one";
+
+  document.getElementById("costCurve").innerHTML =
+    "Cost to buy each rank, 0→10: <code>" + RULES.skillCost.join(" · ") +
+    "</code> — <b>" + cumulativeSkillCost(RULES.skillMax) + " skill points</b> for a maxed skill. " +
+    "Confirmed: the curve runs 1 point for the first rank to 6 for the tenth and totals 28. " +
+    "The exact middle values are inferred.";
+}
+
+function renderPerks(){
+  const box = document.getElementById("perkList");
+  box.textContent = "";
+  const left = perkBudget() - perkSpent();
+
+  const list = allPerks().slice().sort((a,b) =>
+    (SKILL_NAME[a.skill]||"").localeCompare(SKILL_NAME[b.skill]||"") || a.req - b.req);
+
+  let shown = 0;
+  list.forEach(p => {
+    const rank    = S.skills[p.skill] || 0;
+    const met     = rank >= p.req;
+    const owned   = S.perks.includes(p.id);
+    if (!showAllPerks && !met && !owned) return;
+    shown++;
+
+    const row = el("div","perk" + (owned ? " owned" : met ? "" : " locked"));
+    const meta = el("div","meta");
+    meta.appendChild(el("div","pn", esc(p.name) +
+      (p.custom ? '<span class="flag">custom</span>' :
+       p.ver ? "" : '<span class="flag">unverified</span>')));
+    meta.appendChild(el("div","req",
+      esc(SKILL_NAME[p.skill] || p.skill) + " rank " + p.req +
+      ' <span class="'+(met?"ok":"no")+'">· '+(met ? "met" : "at "+rank)+"</span>"));
+    if (p.desc) meta.appendChild(el("div","desc", esc(p.desc)));
+    row.appendChild(meta);
+
+    const b = el("button","btn" + (owned ? " on" : ""), owned ? "Owned" : "Take");
+    b.disabled = !owned && (!met || left < 1);
+    b.title = owned ? "Refund this perk"
+            : !met  ? "Requires " + (SKILL_NAME[p.skill]||p.skill) + " rank " + p.req
+            : left < 1 ? "No perk points remaining" : "Spend 1 perk point";
+    b.onclick = () => {
+      if (owned) S.perks = S.perks.filter(x => x !== p.id);
+      else S.perks.push(p.id);
+      render();
+    };
+    row.appendChild(b);
+    box.appendChild(row);
+  });
+
+  if (!shown){
+    box.appendChild(el("div","perk",
+      '<div class="meta"><div class="desc">No perks available at your current skill ranks. ' +
+      'Use <em>Show all</em> to see every perk and what it needs.</div></div>'));
+  }
+
+  document.getElementById("perkNote").textContent =
+    allPerks().length + " known · " + Math.max(0,left) + " pt left";
+  document.getElementById("perkFilter").textContent = showAllPerks ? "Available only" : "Show all";
+}
+
+function statRow(k, v, zero){
+  const r = el("div","statrow");
+  r.innerHTML = '<span class="k">'+k+'</span><span class="v'+(zero?" zero":"")+'">'+v+'</span>';
+  return r;
+}
+function renderFullStats(){
+  const d = derive();
+  const box = document.getElementById("fullStats");
+  box.textContent = "";
+  const sec = (t) => box.appendChild(el("div","subhead",t));
+  const add = (k,v,unit) => {
+    const zero = (typeof v === "number" && v === 0);
+    box.appendChild(statRow(k, (typeof v === "number" ? r1(v) : v) + (unit||""), zero));
+  };
+
+  sec("Action Economy");
+  add("Action Points", d.ap);
+  add("Max Action Points", d.maxAp);
+  add("Combat Speed", d.combatSpeed, " m/AP");
+  add("Tiles per AP", d.tilesPerAp);
+  add("Initiative", d.initiative);
+  add("Lucky Action Chance", d.luckyAction, "%");
+
+  sec("Survivability");
+  add("Constitution", d.con, " hp");
+  add("CON per level", d.conPerLevel);
+  add("Armor", d.armor);
+  add("Evasion", d.evasion, "%");
+  add("Lucky Evade", d.luckyEvade, "%");
+  add("Status Effect Resist", d.statusRes, "%");
+  add("Critical Resist", d.critResist, "%");
+
+  sec("Offence");
+  add("Hit Chance bonus", d.hitChance, "%");
+  add("Critical Chance", d.critChance, "%");
+  add("Luck Crit Chance", d.luckCrit, "%");
+  add("Mega Crit Chance", d.megaCrit, "%");
+  add("Critical Damage", d.critDmg, "x");
+  add("Penetration", d.penetration);
+  add("Strike Rate", d.strikeRate, "%");
+  add("Ranged Damage", d.rangedDmg, "%");
+  add("Melee Damage", d.meleeDmg, "%");
+  add("Throwing Range", d.throwRange, " m");
+
+  const dmg = [["Fire",d.fireDmg],["Explosive",d.explosiveDmg],["vs Humans",d.vsHumans],
+               ["vs Robots",d.vsRobots],["vs Vehicles",d.vsVehicles]].filter(x => x[1]);
+  if (dmg.length){ sec("Damage Modifiers"); dmg.forEach(([k,v]) => add(k, v, "%")); }
+
+  sec("Utility");
+  add("Perception", d.perception);
+  add("Critical Heal Chance", d.critHeal, "%");
+  add("Experience Bonus", d.xpBonus, "%");
+  add("Mission Reward Bonus", d.missionPay, "%");
+  add("Skill points from INT", attrStat("intelligence","bonusSkill"));
+}
+
+function renderChoices(){
+  const bs = document.getElementById("bgSel");
+  if (!bs.options.length){
+    BACKGROUNDS.forEach(b => bs.add(new Option(b.name, b.id)));
+    QUIRKS.forEach(q => document.getElementById("qkSel").add(new Option(q.name, q.id)));
+  }
+  bs.value = S.background;
+  document.getElementById("qkSel").value = S.quirk;
+  const b = bgOf(), q = qkOf();
+  document.getElementById("bgFx").innerHTML =
+    "<em>" + esc(b.text) + "</em>" + (b.ver ? "" : b.id === "none" || b.id === "custom" ? "" : " (unverified)");
+  document.getElementById("qkFx").innerHTML =
+    "<em>" + esc(q.text) + "</em>" + (q.ver || q.id === "none" ? "" : " (unverified)");
+  document.getElementById("charName").value = S.name;
+}
+
+function renderAssumptions(){
+  const box = document.getElementById("assumptions");
+  const rows = [
+    ["Attribute points", "7 at creation on top of a base 2 in each attribute, then +1 per level from level 3.", true],
+    ["Skill points", RULES.skillPtsPerLevel + " per level, plus a one-time bonus per point of Intelligence.", true],
+    ["Intelligence skill points", "Modelled as +1 per rank above 1 (+9 at rank 10). Sources disagree between this, +1 per even rank, and +1 per rank.", false],
+    ["Perk points", "First at level " + RULES.perkFirstLevel + ", then one every " + RULES.perkEvery + " levels.", true],
+    ["Skill cost curve", "Rises 1 → 6 and totals 28 for rank 10. Endpoints and total confirmed, middle values inferred.", false],
+    ["Level cap", "Set to " + RULES.maxLevel + ". Widely reported for the base game; the DLC cap could not be confirmed. Edit RULES.maxLevel.", false],
+    ["Action Points", "Base 6 / max 10, +1 per two ranks of Coordination, reaching 12 / 16 at Coordination 10.", true],
+    ["Combat Speed", "Base 1.4 m per AP; Speed adds +0.1 at rank 1 up to +1.4 at rank 10 (2.8 m per AP).", true],
+    ["Base CON / crit", "Base Constitution " + RULES.baseCon + ", base crit chance " + RULES.baseCritChance + "%, base crit damage " + RULES.baseCritDamage + "x. Not confirmed — adjust in RULES.", false],
+    ["Perk list", "Small Arms, Sniper Rifles and Automatic Weapons perks are confirmed by name and rank. Other skill trees are incomplete — use “+ Custom perk”.", false],
+  ];
+  box.textContent = "";
+  rows.forEach(([k,v,ok]) => {
+    const r = el("div","statrow");
+    r.style.alignItems = "flex-start";
+    r.innerHTML = '<span class="k" style="flex:0 0 128px">'+esc(k)+'</span>' +
+      '<span style="flex:1;font-size:12.5px;color:var(--ink-dim);text-align:left;line-height:1.5">' +
+      esc(v)+'</span><span class="'+(ok?"tag-v":"tag-a")+'">'+(ok?"verified":"approx")+'</span>';
+    r.style.gap = "10px";
+    box.appendChild(r);
+  });
+
+  const src = el("div");
+  src.innerHTML = '<div class="subhead">Sources</div><ul class="srcs" style="margin:0;padding-left:18px">' +
+    '<li>Official Wasteland 3 Wiki — attributes, skill points, skill points per level, action points, combat speed</li>' +
+    '<li>Fextralife Wasteland 3 Wiki — per-attribute pages, perks, backgrounds, quirks</li>' +
+    '<li>game-maps.com and gamepressure Wasteland 3 guides — attribute and skill tables</li>' +
+    '<li>Neoseeker and TechRaptor Wasteland 3 build guides — quirk and perk listings</li>' +
+    '</ul>';
+  box.appendChild(src);
+}
+
+/* ================================================================
+   PERSISTENCE
+   ================================================================ */
+function loadStore(){
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; }
+  catch(e){ return {}; }
+}
+function saveStore(o){
+  try { localStorage.setItem(LS_KEY, JSON.stringify(o)); }
+  catch(e){ alert("Could not write to browser storage. The build was not saved."); }
+}
+function refreshSaveList(){
+  const sel = document.getElementById("saveSel");
+  const store = loadStore();
+  const keys = Object.keys(store).sort();
+  const cur = sel.value;
+  sel.textContent = "";
+  if (!keys.length){ sel.add(new Option("— no saved builds —","")); return; }
+  keys.forEach(k => sel.add(new Option(k, k)));
+  if (keys.includes(cur)) sel.value = cur;
+}
+
+/** Merge a loaded object over a blank state so older files stay loadable. */
+function adopt(obj){
+  const s = blankState();
+  s.name  = typeof obj.name === "string" ? obj.name : "";
+  s.level = clamp(Number(obj.level) || 1, 1, RULES.maxLevel);
+  if (BACKGROUNDS.some(b => b.id === obj.background)) s.background = obj.background;
+  if (QUIRKS.some(q => q.id === obj.quirk)) s.quirk = obj.quirk;
+  ATTRS.forEach(a => {
+    s.attrs[a.id]    = clamp(Number(obj.attrs?.[a.id]) || RULES.attrBase, RULES.attrMin, RULES.attrMax);
+    s.attrGear[a.id] = Number(obj.attrGear?.[a.id]) || 0;
+  });
+  SKILLS.forEach(k => {
+    s.skills[k.id]    = clamp(Number(obj.skills?.[k.id]) || 0, 0, RULES.skillMax);
+    s.skillGear[k.id] = Number(obj.skillGear?.[k.id]) || 0;
+  });
+  GEAR_FIELDS.forEach(g => { s.gear[g.key] = Number(obj.gear?.[g.key]) || 0; });
+  s.customPerks = Array.isArray(obj.customPerks) ? obj.customPerks.filter(p =>
+    p && typeof p.id === "string" && typeof p.name === "string") : [];
+  const valid = new Set(PERKS.concat(s.customPerks).map(p => p.id));
+  s.perks = Array.isArray(obj.perks) ? obj.perks.filter(p => valid.has(p)) : [];
+  return s;
+}
+
+/* ================================================================
+   WIRING
+   ================================================================ */
+document.getElementById("lvlUp").onclick = () => {
+  if (S.level < RULES.maxLevel){ S.level++; render(); }
+};
+document.getElementById("lvlDown").onclick = () => {
+  if (S.level > 1){ S.level--; render(); }
+};
+document.getElementById("charName").oninput = e => { S.name = e.target.value; };
+document.getElementById("bgSel").onchange = e => { S.background = e.target.value; render(); };
+document.getElementById("qkSel").onchange = e => { S.quirk = e.target.value; render(); };
+document.getElementById("perkFilter").onclick = () => { showAllPerks = !showAllPerks; render(); };
+
+document.getElementById("btnAddPerk").onclick = () => {
+  const name = prompt("Perk name");
+  if (!name) return;
+  const opts = SKILLS.map((s,i) => (i+1)+" " + s.name).join("\n");
+  const pick = prompt("Which skill?\n\n" + opts + "\n\nEnter a number 1-" + SKILLS.length);
+  const idx = Number(pick) - 1;
+  if (!(idx >= 0 && idx < SKILLS.length)) return;
+  const req = clamp(Number(prompt("Required skill rank (1-10)")) || 1, 1, RULES.skillMax);
+  const desc = prompt("What does it do? (optional)") || "";
+  S.customPerks.push({
+    id: "custom_" + Date.now().toString(36),
+    skill: SKILLS[idx].id, req, name, desc, custom: true,
+  });
+  render();
+};
+
+document.getElementById("btnSave").onclick = () => {
+  const suggested = S.name || "Ranger " + S.level;
+  const key = prompt("Save build as", suggested);
+  if (!key) return;
+  const store = loadStore();
+  store[key] = S;
+  saveStore(store);
+  refreshSaveList();
+  document.getElementById("saveSel").value = key;
+};
+document.getElementById("btnLoad").onclick = () => {
+  const key = document.getElementById("saveSel").value;
+  if (!key) return;
+  const store = loadStore();
+  if (!store[key]) return;
+  S = adopt(store[key]);
+  render();
+};
+document.getElementById("btnDelete").onclick = () => {
+  const key = document.getElementById("saveSel").value;
+  if (!key) return;
+  if (!confirm('Delete the saved build "' + key + '"? This cannot be undone.')) return;
+  const store = loadStore();
+  delete store[key];
+  saveStore(store);
+  refreshSaveList();
+};
+document.getElementById("btnExport").onclick = () => {
+  const blob = new Blob([JSON.stringify(S, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = (S.name || "wasteland3-ranger").replace(/[^\w.-]+/g,"_") + ".json";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
+document.getElementById("btnImport").onclick = () => {
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = "application/json,.json";
+  inp.onchange = () => {
+    const f = inp.files && inp.files[0];
+    if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try { S = adopt(JSON.parse(rd.result)); render(); }
+      catch(e){ alert("That file is not a build export this page can read."); }
+    };
+    rd.readAsText(f);
+  };
+  inp.click();
+};
+document.getElementById("btnReset").onclick = () => {
+  if (!confirm("Clear this build and start over?")) return;
+  S = blankState();
+  document.getElementById("gearGrid").dataset.built = "";
+  render();
+};
+
+refreshSaveList();
+renderAssumptions();
+render();
+</script>
+</body>
+</html>
